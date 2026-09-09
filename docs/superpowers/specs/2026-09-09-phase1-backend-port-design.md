@@ -26,11 +26,20 @@ This document covers Phase 1 only.
   per resource — mirrors the existing `be/internal/store/*.go` structure
   1:1. No ORM. Chosen over Drizzle/Supabase-js to minimize translation risk
   since the Go queries are already simple, parameterized SQL.
-- **Auth**: httpOnly-cookie sessions via `middleware.ts`, replacing the
-  Go version's `Authorization: Bearer <token>` + localStorage pattern.
-  Same-origin now (FE and API share one Next.js app), so the Go
-  `frontend_guard` (Origin/Referer allow-list) and CORS middleware are
-  **dropped entirely** — not needed when there's no cross-origin call.
+- **Auth**: httpOnly-cookie sessions verified via a small Data Access Layer
+  (`lib/server/session.ts`), replacing the Go version's
+  `Authorization: Bearer <token>` + localStorage pattern. Same-origin now
+  (FE and API share one Next.js app), so the Go `frontend_guard`
+  (Origin/Referer allow-list) and CORS middleware are **dropped
+  entirely** — not needed when there's no cross-origin call.
+- **This project's Next.js version (16.3.4) renamed Middleware to
+  Proxy** — the file is `proxy.ts` at the project root, exported function
+  named `proxy`, same `matcher` config shape. It does an *optimistic*
+  cookie-presence + JWT-verify check only (mirrors Go's centralized
+  `jwtAuth.RequireJWT` 401 gate). Per Next's own auth guide, Proxy should
+  never be the only auth check — every protected Route Handler
+  independently re-verifies the session via the DAL rather than trusting
+  a value forwarded from Proxy.
 - **Not using** Supabase Auth or `@supabase/supabase-js` / `@supabase/ssr`.
   Auth is custom (Google ID token verified server-side, our own HS256 JWT
   issued and stored in httpOnly cookies) — Supabase is only the Postgres
@@ -39,15 +48,15 @@ This document covers Phase 1 only.
 ## Architecture / file layout
 
 ```
-middleware.ts                      # verify access_token cookie, guard /api/* except /api/auth/*
+proxy.ts                            # optimistic gate: verify access_token cookie, guard protected /api/* paths (Next 16's renamed Middleware)
 lib/server/
   db.ts             # pg Pool singleton (uses DATABASE_URL, pooler mode)
   jwt.ts            # sign/verify access+refresh HS256 JWT, same claims shape as Go (user, token_type, iat, exp, sub)
   crypto.ts         # AES-256-GCM amount cipher, MUST be byte-compatible with Go's notecrypto (see Risks)
   google-auth.ts    # verify Google ID token via google-auth-library
   gemini.ts         # callGemini() with model-fallback list, ported 1:1 from gemini_client.go
-  cookies.ts        # setAuthCookies(res, {access, refresh}) / clearAuthCookies(res)
-  require-user.ts   # reads verified user from request (set by middleware), throws 401 JSON if absent
+  cookies.ts        # setAuthCookies() / clearAuthCookies(), Next's async cookies() API
+  session.ts        # requireUser() DAL — each route handler calls this itself, doesn't trust proxy.ts alone
 app/api/
   auth/google/route.ts       # POST
   auth/refresh/route.ts      # POST
@@ -79,12 +88,16 @@ app/api/
    Both: `httpOnly`, `secure` (prod only), `sameSite=lax`.
    Response body: `{ user }` only — no token strings in JSON (cookie-based
    now, unlike Go which returned `access_token`/`refresh_token` in body).
-2. `middleware.ts` matcher covers `/api/:path*` excluding `/api/auth/*`.
-   Reads `access_token` cookie, verifies JWT. On failure: `401 { message:
-   "JWT tidak valid" }` for API routes (same message text as Go, so any FE
-   code checking that exact string still works). On success: forwards
-   decoded user via a request header (e.g. `x-auth-user: <json>`) so route
-   handlers don't re-verify.
+2. `proxy.ts`'s `matcher` covers every protected `/api/*` path (not
+   `/api/auth/*` or `/api/health`). Reads `access_token` cookie, verifies
+   JWT. On failure: `401 { message: "JWT tidak valid" }` (same message
+   text as Go, so any FE code checking that exact string still works).
+   On success: lets the request through — it does **not** forward the
+   decoded user via a header. Each protected Route Handler calls
+   `requireUser()` from `lib/server/session.ts` itself, which re-reads
+   and re-verifies the same cookie (cheap — pure JWT verify, no DB hit).
+   This matches Next's documented guidance that Proxy is an optimistic
+   pre-filter only, never the sole authorization check.
 3. `POST /api/auth/refresh` — reads `refresh_token` cookie (no body
    needed, unlike Go which took it in JSON body — cookie replaces that).
    Verify, issue new pair, re-set both cookies.
