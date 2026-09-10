@@ -48,8 +48,17 @@ export type NotesSummary = {
 export class NotFoundError extends Error {}
 
 function formatDate(value: string | Date): string {
-  const date = typeof value === 'string' ? new Date(value) : value;
-  return date.toISOString().slice(0, 10);
+  // db.ts registers a raw-string type parser for Postgres `date` (OID 1082),
+  // so this is normally already 'YYYY-MM-DD'. The Date branch is a defensive
+  // fallback only — .toISOString() must NOT be used here, since it converts
+  // through UTC and shifts the date backward on any server east of UTC.
+  if (typeof value === 'string') {
+    return value.slice(0, 10);
+  }
+  const year = value.getFullYear();
+  const month = String(value.getMonth() + 1).padStart(2, '0');
+  const day = String(value.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 type RawNoteRow = {
