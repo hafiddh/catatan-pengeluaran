@@ -10,12 +10,15 @@
     "test": "tsx --test lib/server/**/*.test.ts"
   },
   "dependencies": {
+    "@react-oauth/google": "^0.13.5",
     "google-auth-library": "^11.0.2",
     "jose": "^6.2.12",
+    "lucide-react": "^1.44.0",
     "next": "16.3.4",
     "pg": "^8.23.0",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "react-easy-crop": "^6.2.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
