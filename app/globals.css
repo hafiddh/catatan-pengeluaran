@@ -1,26 +1,299 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: light;
+  --app-bg: color-mix(in oklab, var(--color-slate-300) 30%, transparent);
+  --app-surface: var(--color-white);
+  --app-text: var(--color-slate-900);
+  --app-text-muted: var(--color-slate-500);
+  --app-border: var(--color-slate-200);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html.dark {
+  color-scheme: dark;
+  --app-bg: #0f172a;
+  --app-surface: #111827;
+  --app-text: #e5e7eb;
+  --app-text-muted: #94a3b8;
+  --app-border: #334155;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--app-bg);
+  color: var(--app-text);
+  @apply font-sans;
+}
+
+html,
+body {
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;
+}
+
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+*::-webkit-scrollbar {
+  display: none;
+}
+
+html.dark .bg-white {
+  background-color: var(--app-surface) !important;
+}
+
+html.dark .text-gray-500,
+html.dark .text-gray-400 {
+  color: var(--app-text-muted) !important;
+}
+
+html.dark .text-gray-700,
+html.dark .text-gray-900,
+html.dark .text-black {
+  color: var(--app-text) !important;
+}
+
+html.dark .border-gray-100,
+html.dark .border-gray-200,
+html.dark .border-gray-300 {
+  border-color: var(--app-border) !important;
+}
+
+html.dark .bg-gray-50,
+html.dark .bg-slate-50 {
+  background-color: #1f2937 !important;
+}
+
+.theme-toggle {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 80;
+  border: 1px solid var(--app-border);
+  background-color: var(--app-surface);
+  color: var(--app-text);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  font-size: 0; /* hide text if any */
+  cursor: pointer;
+}
+
+* {
+  font-family: ui-sans-serif, system-ui, sans-serif, "Montserrat";
+}
+
+.container-px {
+  @apply px-2 sm:px-4 lg:px-8 xl:px-12;
+}
+
+.box-dashboard {
+  @apply rounded-lg p-4 xl:p-2 xl:py-6 2xl:p-6 flex flex-col items-center 2xl:min-w-[168px] cursor-pointer hover:bg-slate-200;
+}
+
+.led-box-dashboard {
+  @apply rounded-lg p-4 xl:p-2 xl:py-6 2xl:p-6 flex flex-col items-center 2xl:min-w-[168px] hover:scale-105 transition-all duration-200 cursor-pointer hover:bg-cyan-300;
+}
+
+.led-box-dashboard-skb {
+  @apply rounded-lg p-4 xl:p-2 xl:py-6 2xl:p-6 flex flex-col items-center 2xl:min-w-[168px] hover:scale-105 transition-all duration-200 cursor-pointer hover:bg-[#53a2ea];
+}
+
+.btn-gradient {
+  @apply bg-gradient-to-r from-[#EF1262] to-[#4361EE] text-white hover:from-[#4361EE] hover:to-[#EF1262];
+}
+
+.active_card_dashboard {
+  @apply bg-slate-500;
+}
+
+@keyframes gradientBackground {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes heartbeat {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+.animate-heartbeat {
+  animation: heartbeat 2.5s ease-in-out infinite;
+}
+
+.animate-gradient {
+  animation: gradientBackground 50s ease infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.animate-blink {
+  animation: blink 0.8s step-end infinite;
+}
+
+.hide-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.game-wrapper {
+  width: 50vw;
+  height: 50vh;
+  margin: auto;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.game-canvas {
+  background-color: #f4f4f4;
+  border: 2px solid #269dd8;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.game-score {
+  color: #333;
+  font-size: 20px;
+  margin-bottom: 8px;
+  font-weight: bold;
+}
+
+.game-paddle {
+  fill: #de1d5e;
+  stroke: #de1d5e;
+  stroke-width: 3;
+}
+
+.game-ball {
+  fill: #484e80;
+}
+
+.game-block {
+  fill: #269dd8;
+  stroke: #269dd8;
+  stroke-width: 2;
+}
+
+.game-transition {
+  transition: all 0.2s ease-out;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #269dd844;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #269dd844;
+  border-radius: 5px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #ea436d4a;
+}
+
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #269dd844 #f1f1f1;
+}
+
+/* React PDF Styles */
+.react-pdf__Page {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background-color: white;
+  background-clip: content-box;
+  border: 1px solid transparent;
+  box-sizing: border-box;
+}
+
+.react-pdf__Page__textContent {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  opacity: 0.2;
+  line-height: 1;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+}
+
+.react-pdf__Page__annotations {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  opacity: 0.2;
+  pointer-events: none;
+}
+
+.react-pdf__Page__annotations .linkAnnotation,
+.react-pdf__Page__annotations .buttonWidgetAnnotation,
+.react-pdf__Page__annotations .choiceWidgetAnnotation,
+.react-pdf__Page__annotations .textWidgetAnnotation {
+  cursor: pointer;
+  pointer-events: auto;
 }
