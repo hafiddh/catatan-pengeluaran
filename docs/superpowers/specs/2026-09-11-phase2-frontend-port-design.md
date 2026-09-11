@@ -216,7 +216,7 @@ and API now share one origin).
 | `laporan.astro` | `(app)/laporan/page.tsx` | renders `components/laporan/laporan.tsx` |
 | `profile.astro` | `(app)/profile/page.tsx` | currently a stub (`<h1>Profil</h1>`) in `fe/` too — ported as-is, not expanded |
 | `maintenance.astro` | — dropped | see Decisions |
-| `404.astro` | `app/not-found.tsx` | Next.js convention file, auto-rendered on unmatched routes |
+| `404.astro` | `app/not-found.tsx` | Next.js convention file, auto-rendered on unmatched routes. **Note**: the old file's actual content rendered `MaintenancePage` (the dropped minigame), not a real "not found" message — the new page is a plain not-found screen instead, since there's no other authentic content to port |
 
 `components/layouts/Layout.tsx`'s bottom nav (`Dashboard`/`List`/
 `Laporan`/`Logout` + profile-photo button) ports into
