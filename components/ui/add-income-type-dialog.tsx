@@ -8,14 +8,12 @@ import { useEffect, useRef, useState } from "react";
 type Props = {
   isOpen: boolean;
   onClose: () => void;
-  token: string;
   onCreated: (newType: IncomeType) => void;
 };
 
 export function AddIncomeTypeDialog({
   isOpen,
   onClose,
-  token,
   onCreated,
 }: Props) {
   const [label, setLabel] = useState("");
