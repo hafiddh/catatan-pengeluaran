@@ -8,7 +8,6 @@ import { useEffect, useState } from "react";
 type Props = {
   isOpen: boolean;
   onClose: () => void;
-  token: string;
   kategoriId: string;
   kategoriLabel: string;
   kategoriIcon: string;
@@ -38,7 +37,6 @@ function formatDate(date: string): string {
 export function CategoryNotesModal({
   isOpen,
   onClose,
-  token,
   kategoriId,
   kategoriLabel,
   kategoriIcon,
@@ -81,7 +79,7 @@ export function CategoryNotesModal({
     return () => {
       active = false;
     };
-  }, [isOpen, kategoriId, token, startDate, endDate]);
+  }, [isOpen, kategoriId, startDate, endDate]);
 
   useEffect(() => {
     if (!isOpen) return;
