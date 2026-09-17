@@ -1,10 +1,7 @@
 import { NextResponse } from 'next/server';
 import { verifyGoogleCredential } from '@/lib/server/google-auth';
-import { signToken } from '@/lib/server/jwt';
+import { issueTokens } from '@/lib/server/auth-config';
 import { setAuthCookies } from '@/lib/server/cookies';
-
-const ACCESS_TTL_SECONDS = 60 * 60 * 2;
-const REFRESH_TTL_SECONDS = 60 * 60 * 24;
 
 export async function POST(request: Request) {
   let body: { credential?: string };
@@ -26,11 +23,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const secret = process.env.JWT_SECRET ?? '';
-  const [accessToken, refreshToken] = await Promise.all([
-    signToken(secret, user, 'access', ACCESS_TTL_SECONDS),
-    signToken(secret, user, 'refresh', REFRESH_TTL_SECONDS),
-  ]);
+  const { accessToken, refreshToken } = await issueTokens(user);
 
   await setAuthCookies(accessToken, refreshToken);
 

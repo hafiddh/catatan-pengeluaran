@@ -1,15 +1,8 @@
 import { cookies } from 'next/headers';
 import { verifyToken, type AuthUser } from './jwt';
+import { ACCESS_TOKEN_COOKIE, jwtSecret } from './auth-config';
 
 export class UnauthorizedError extends Error {}
-
-function jwtSecret(): string {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    throw new Error('JWT_SECRET is not set');
-  }
-  return secret;
-}
 
 /**
  * Reads and verifies the access_token cookie. Every protected Route
@@ -18,7 +11,7 @@ function jwtSecret(): string {
  */
 export async function requireUser(): Promise<AuthUser> {
   const cookieStore = await cookies();
-  const token = cookieStore.get('access_token')?.value;
+  const token = cookieStore.get(ACCESS_TOKEN_COOKIE)?.value;
   if (!token) {
     throw new UnauthorizedError('JWT tidak valid');
   }
