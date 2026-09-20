@@ -13,6 +13,8 @@ type Props = {
   kategoriIcon: string;
   startDate: string;
   endDate: string;
+  /** Ikut filter pencatat di halaman laporan. */
+  ownerId?: string;
   totalAmount: number;
 };
 
@@ -42,6 +44,7 @@ export function CategoryNotesModal({
   kategoriIcon,
   startDate,
   endDate,
+  ownerId,
   totalAmount,
 }: Props) {
   const [notes, setNotes] = useState<ShoppingNote[]>([]);
@@ -60,6 +63,7 @@ export function CategoryNotesModal({
       startDate,
       endDate,
       kategoriId,
+      ownerId,
       limit: 100,
       page: 1,
     })
@@ -79,7 +83,7 @@ export function CategoryNotesModal({
     return () => {
       active = false;
     };
-  }, [isOpen, kategoriId, startDate, endDate]);
+  }, [isOpen, kategoriId, startDate, endDate, ownerId]);
 
   useEffect(() => {
     if (!isOpen) return;

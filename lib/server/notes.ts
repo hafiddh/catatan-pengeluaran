@@ -145,12 +145,8 @@ function buildNotesWhere(
   >,
 ): { clause: string; values: unknown[] } {
   // Baca lintas anggota household; tulis tetap milik sendiri (lihat update/delete).
-  const scope = householdScope(userId);
-  // Filter pencatat hanya boleh mempersempit scope, tidak melebarkannya.
-  const readable = params.ownerId && scope.includes(params.ownerId) ? [params.ownerId] : scope;
-
   const conditions = ['t.user_id = ANY($1)', 't.deleted_at IS NULL'];
-  const values: unknown[] = [readable];
+  const values: unknown[] = [resolveScope(userId, 'household', params.ownerId)];
 
   if (params.startDate) {
     values.push(params.startDate);
@@ -259,27 +255,36 @@ export async function softDeleteShoppingNote(userId: string, id: string): Promis
   }
 }
 
+export type SummarizeParams = {
+  startDate: string;
+  endDate: string;
+  jenisTransaksi: string;
+  /** 'own' dipakai pilihan "punya saya" di analisa AI. */
+  scope?: ScopeMode;
+  /** Filter pencatat dari panel laporan; diabaikan kalau di luar scope. */
+  ownerId?: string;
+};
+
 export async function summarizeShoppingNotes(
   secret: string,
   userId: string,
-  startDate: string,
-  endDate: string,
-  jenisTransaksi: string,
-  scope: ScopeMode = 'household',
+  params: SummarizeParams,
 ): Promise<NotesSummary> {
   const conditions = ['t.user_id = ANY($1)', 't.deleted_at IS NULL'];
-  const values: unknown[] = [resolveScope(userId, scope)];
+  const values: unknown[] = [
+    resolveScope(userId, params.scope ?? 'household', params.ownerId),
+  ];
 
-  if (startDate) {
-    values.push(startDate);
+  if (params.startDate) {
+    values.push(params.startDate);
     conditions.push(`t.tanggal >= $${values.length}`);
   }
-  if (endDate) {
-    values.push(endDate);
+  if (params.endDate) {
+    values.push(params.endDate);
     conditions.push(`t.tanggal <= $${values.length}`);
   }
-  if (jenisTransaksi) {
-    values.push(jenisTransaksi);
+  if (params.jenisTransaksi) {
+    values.push(params.jenisTransaksi);
     conditions.push(`t.jenis_transaksi = $${values.length}`);
   }
 

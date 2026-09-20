@@ -128,9 +128,15 @@ type PersonaValue = (typeof PERSONA_OPTIONS)[number]["value"];
 type Props = {
   startDate: string;
   endDate: string;
+  /** Filter pencatat dari panel filter; kosong berarti semua anggota. */
+  ownerId: string;
 };
 
-export function LaporanPengeluaranView({ startDate, endDate }: Props) {
+export function LaporanPengeluaranView({
+  startDate,
+  endDate,
+  ownerId,
+}: Props) {
   const { user } = useAuth();
   const [summary, setSummary] = useState<NotesSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -269,6 +275,7 @@ export function LaporanPengeluaranView({ startDate, endDate }: Props) {
         startDate,
         endDate,
         jenisTransaksi: "pengeluaran",
+        ownerId,
       });
       setSummary(data);
     } catch (e: unknown) {
@@ -284,7 +291,7 @@ export function LaporanPengeluaranView({ startDate, endDate }: Props) {
 
   useEffect(() => {
     fetchData(true);
-  }, [startDate, endDate]);
+  }, [startDate, endDate, ownerId]);
 
   return (
     <>
@@ -658,6 +665,7 @@ export function LaporanPengeluaranView({ startDate, endDate }: Props) {
 
       {selectedCategory && (
         <CategoryNotesModal
+          ownerId={ownerId}
           isOpen={!!selectedCategory}
           onClose={() => setSelectedCategory(null)}
           kategoriId={selectedCategory.kategori_id}

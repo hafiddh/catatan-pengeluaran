@@ -41,6 +41,17 @@ test('resolveScope mempersempit ke data sendiri saat mode own', () => {
   assert.deepEqual(resolveScope(KIKI, 'household').sort(), [KIKI, HAFID].sort());
 });
 
+test('resolveScope mempersempit ke satu pencatat lewat ownerId', () => {
+  assert.deepEqual(resolveScope(KIKI, 'household', HAFID), [HAFID]);
+  assert.deepEqual(resolveScope(KIKI, 'household', ''), resolveScope(KIKI, 'household'));
+});
+
+test('ownerId di luar scope diabaikan, bukan melebarkan akses', () => {
+  assert.deepEqual(resolveScope(KIKI, 'household', '999').sort(), [KIKI, HAFID].sort());
+  assert.deepEqual(resolveScope(KIKI, 'own', HAFID), [KIKI]);
+  assert.deepEqual(resolveScope('999', 'household', KIKI), ['999']);
+});
+
 test('setiap anggota punya avatar', () => {
   for (const member of HOUSEHOLD_MEMBERS) {
     assert.match(member.avatar, /^\/images\/.+\.webp$/);

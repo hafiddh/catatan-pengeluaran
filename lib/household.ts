@@ -35,11 +35,14 @@ export function householdScope(userId: string): string[] {
 }
 
 /**
- * Seperti householdScope(), tapi bisa dipersempit ke data sendiri — dipakai
- * analisa AI yang memberi pilihan "gabungan" atau "punya saya".
+ * Seperti householdScope(), tapi bisa dipersempit: `mode` untuk pilihan
+ * "gabungan"/"punya saya" di analisa AI, `ownerId` untuk filter pencatat di
+ * halaman list dan laporan. Keduanya hanya boleh mempersempit — id di luar
+ * scope diabaikan supaya tidak jadi celah membaca data orang lain.
  */
-export function resolveScope(userId: string, mode: ScopeMode): string[] {
-  return mode === 'own' ? [userId] : householdScope(userId);
+export function resolveScope(userId: string, mode: ScopeMode, ownerId = ''): string[] {
+  const base = mode === 'own' ? [userId] : householdScope(userId);
+  return ownerId && base.includes(ownerId) ? [ownerId] : base;
 }
 
 export function findMember(userId: string): HouseholdMember | undefined {

@@ -108,6 +108,7 @@ export async function getShoppingNotesSummary(
     endDate?: string;
     jenisTransaksi?: string;
     scope?: ScopeMode;
+    ownerId?: string;
   } = {},
 ): Promise<NotesSummary> {
   const query = new URLSearchParams();
@@ -115,6 +116,7 @@ export async function getShoppingNotesSummary(
   if (params.endDate) query.set("end_date", params.endDate);
   if (params.jenisTransaksi) query.set("jenis_transaksi", params.jenisTransaksi);
   if (params.scope) query.set("scope", params.scope);
+  if (params.ownerId) query.set("user_id", params.ownerId);
 
   const qs = query.toString();
   const res = await apiFetch(`/notes/summary${qs ? `?${qs}` : ""}`, {

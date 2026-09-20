@@ -4,7 +4,10 @@ import {
   TransactionTypeTabs,
   type TransactionType,
 } from "@/components/dashboard/transaction-type-tabs";
+import { useAuth } from "@/lib/client/auth-context";
+import { HOUSEHOLD_MEMBERS, isHouseholdMember } from "@/lib/household";
 import { CalendarRange, ChevronDown, RefreshCcw } from "lucide-react";
+import Image from "next/image";
 import { useState } from "react";
 import { LaporanPemasukanView } from "./laporan-pemasukan";
 import { LaporanPengeluaranView } from "./laporan-pengeluaran";
@@ -19,7 +22,17 @@ function getFirstDayOfMonth(): string {
   return `${getTodayLocalISODate().slice(0, 8)}01`;
 }
 
+const PILL_BASE =
+  "inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors";
+const PILL_ON =
+  "bg-cyan-500 text-white shadow-[0_6px_16px_rgba(6,182,212,0.35)] dark:bg-cyan-600";
+const PILL_OFF =
+  "border border-slate-200 bg-white/40 text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300 dark:hover:bg-slate-800/40";
+
 export function LaporanPage() {
+  const { user } = useAuth();
+  const canFilterOwner = isHouseholdMember(user?.id ?? "");
+  const [ownerId, setOwnerId] = useState<string>("");
   const [transactionType, setTransactionType] =
     useState<TransactionType>("pengeluaran");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -93,6 +106,39 @@ export function LaporanPage() {
                   />
                 </label>
               </div>
+              {canFilterOwner && (
+                <div className="space-y-2 pt-4">
+                  <span className="text-sm font-medium text-gray-700 dark:text-slate-200">
+                    Pencatat
+                  </span>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setOwnerId("")}
+                      className={`${PILL_BASE} ${ownerId === "" ? PILL_ON : PILL_OFF}`}
+                    >
+                      Semua
+                    </button>
+                    {HOUSEHOLD_MEMBERS.map((member) => (
+                      <button
+                        key={member.id}
+                        type="button"
+                        onClick={() => setOwnerId(member.id)}
+                        className={`${PILL_BASE} py-1 pl-1 ${ownerId === member.id ? PILL_ON : PILL_OFF}`}
+                      >
+                        <Image
+                          src={member.avatar}
+                          alt=""
+                          width={36}
+                          height={36}
+                          className="h-5 w-5 rounded-full bg-white object-cover"
+                        />
+                        {member.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
               <div className="flex items-center justify-between pt-2">
                 <span />
                 <button
@@ -100,6 +146,7 @@ export function LaporanPage() {
                   onClick={() => {
                     setStartDate(getFirstDayOfMonth());
                     setEndDate(getTodayLocalISODate());
+                    setOwnerId("");
                   }}
                   className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-white/45 bg-white/35 px-3 py-2 text-xs font-semibold text-slate-900 shadow-[0_10px_24px_rgba(15,23,42,0.08)] backdrop-blur-sm transition-all duration-300 ease-out hover:-translate-y-0.5 hover:bg-white/50 dark:border-slate-700/70 dark:bg-slate-900/35 dark:text-slate-100 dark:hover:bg-slate-800/45"
                 >
@@ -117,9 +164,17 @@ export function LaporanPage() {
         />
 
         {transactionType === "pengeluaran" ? (
-          <LaporanPengeluaranView startDate={startDate} endDate={endDate} />
+          <LaporanPengeluaranView
+            startDate={startDate}
+            endDate={endDate}
+            ownerId={ownerId}
+          />
         ) : (
-          <LaporanPemasukanView startDate={startDate} endDate={endDate} />
+          <LaporanPemasukanView
+            startDate={startDate}
+            endDate={endDate}
+            ownerId={ownerId}
+          />
         )}
       </div>
     </main>

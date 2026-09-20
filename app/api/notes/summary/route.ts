@@ -19,15 +19,13 @@ export async function GET(request: Request) {
   const jenisTransaksi = url.searchParams.get('jenis_transaksi')?.trim() ?? '';
   // Default household supaya laporan tetap gabungan; 'own' dipakai analisa AI.
   const scope = url.searchParams.get('scope')?.trim() === 'own' ? 'own' : 'household';
+  const ownerId = url.searchParams.get('user_id')?.trim() ?? '';
 
   try {
     const summary = await summarizeShoppingNotes(
       process.env.NOTES_ENCRYPT_KEY ?? '',
       user.id,
-      startDate,
-      endDate,
-      jenisTransaksi,
-      scope,
+      { startDate, endDate, jenisTransaksi, scope, ownerId },
     );
     return NextResponse.json(summary);
   } catch {
