@@ -2,6 +2,7 @@
 
 import { CategoryNotesModal } from "@/components/ui/category-notes-modal";
 import { getExpenseTypeIcon } from "@/components/ui/expense-type-pills";
+import { OwnerBadge } from "@/components/ui/owner-badge";
 import { useAuth } from "@/lib/client/auth-context";
 import {
   HOUSEHOLD_MEMBERS,
@@ -595,11 +596,14 @@ export function LaporanPemasukanView({
                         className="w-full cursor-pointer px-4 py-4 text-left transition-colors hover:bg-slate-50/60 dark:hover:bg-slate-800/30 active:bg-slate-100/60"
                       >
                         <div className="flex items-start justify-between gap-3">
-                          <div className="inline-flex min-w-0 items-center gap-2 rounded-full bg-emerald-50 px-3.5 py-1.5 text-sm font-semibold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200">
-                            {getExpenseTypeIcon(item.icon, item.kategori_label)}
-                            <span className="truncate">
-                              {item.kategori_label || "Tanpa kategori"}
-                            </span>
+                          <div className="flex min-w-0 flex-wrap items-center gap-2">
+                            <div className="inline-flex min-w-0 items-center gap-2 rounded-full bg-emerald-50 px-3.5 py-1.5 text-sm font-semibold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200">
+                              {getExpenseTypeIcon(item.icon, item.kategori_label)}
+                              <span className="truncate">
+                                {item.kategori_label || "Tanpa kategori"}
+                              </span>
+                            </div>
+                            <OwnerBadge userId={item.kategori_user_id} />
                           </div>
                           <div className="rounded-xl bg-gray-50 px-3 py-1.5 text-right dark:bg-slate-800/70">
                             <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-gray-500 dark:text-slate-400">
@@ -627,6 +631,7 @@ export function LaporanPemasukanView({
                       <thead>
                         <tr className="bg-gray-50 text-left text-gray-600 dark:bg-slate-800/60 dark:text-slate-200">
                           <th className="px-5 py-4 font-semibold">Kategori</th>
+                          <th className="px-5 py-4 font-semibold">Oleh</th>
                           <th className="px-5 py-4 font-semibold">
                             Jumlah data
                           </th>
@@ -650,6 +655,9 @@ export function LaporanPemasukanView({
                                 )}
                                 {item.kategori_label || "Tanpa kategori"}
                               </div>
+                            </td>
+                            <td className="px-5 py-4">
+                              <OwnerBadge userId={item.kategori_user_id} />
                             </td>
                             <td className="px-5 py-4 text-gray-600 dark:text-slate-300">
                               {item.count}

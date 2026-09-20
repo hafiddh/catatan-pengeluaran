@@ -53,6 +53,8 @@ export type ListNotesResult = {
 export type NotesSummaryItem = {
   kategori_id: string;
   kategori_label: string;
+  /** Pemilik kategorinya; kosong kalau kategori sudah dihapus. */
+  kategori_user_id: string;
   icon: string;
   count: number;
   total: number;

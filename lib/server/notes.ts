@@ -39,6 +39,8 @@ export type ListNotesResult = {
 export type NotesSummaryItem = {
   kategori_id: string;
   kategori_label: string;
+  /** Pemilik kategorinya; kosong kalau kategori sudah dihapus. */
+  kategori_user_id: string;
   icon: string;
   count: number;
   total: number;
@@ -292,11 +294,13 @@ export async function summarizeShoppingNotes(
     kategori_id: string;
     label: string;
     icon: string;
+    kategori_user_id: string;
     jumlah: string;
   }>(
     `SELECT t.kategori_id,
             COALESCE(jp.label, jpm.label, '') AS label,
             COALESCE(jp.icon, jpm.icon, '') AS icon,
+            COALESCE(jp.user_id, jpm.user_id, '') AS kategori_user_id,
             t.jumlah
      FROM transaksi t
      LEFT JOIN jenis_pengeluaran jp ON jp.id = t.kategori_id AND jp.deleted_at IS NULL
@@ -322,6 +326,7 @@ export async function summarizeShoppingNotes(
       grouped.set(row.kategori_id, {
         kategori_id: row.kategori_id,
         kategori_label: row.label,
+        kategori_user_id: row.kategori_user_id ?? '',
         icon: row.icon,
         count: 1,
         total: jumlah,
