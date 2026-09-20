@@ -22,6 +22,7 @@ export async function GET(request: Request) {
   const endDate = url.searchParams.get('end_date')?.trim() ?? '';
   const kategoriId = url.searchParams.get('kategori_id')?.trim() ?? '';
   const jenisTransaksi = url.searchParams.get('jenis_transaksi')?.trim() ?? '';
+  const ownerId = url.searchParams.get('user_id')?.trim() ?? '';
 
   let page = Number.parseInt(url.searchParams.get('page') ?? '1', 10);
   if (!Number.isFinite(page) || page < 1) page = 1;
@@ -35,6 +36,7 @@ export async function GET(request: Request) {
       endDate,
       kategoriId,
       jenisTransaksi,
+      ownerId,
       limit,
       offset: (page - 1) * limit,
     });

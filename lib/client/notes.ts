@@ -36,6 +36,8 @@ export type ListNotesParams = {
   endDate?: string;
   kategoriId?: string;
   jenisTransaksi?: string;
+  /** Filter pencatat; kosong berarti semua anggota yang boleh dilihat. */
+  ownerId?: string;
   page?: number;
   limit?: number;
 };
@@ -86,6 +88,7 @@ export async function listShoppingNotes(
   if (params.endDate) query.set("end_date", params.endDate);
   if (params.kategoriId) query.set("kategori_id", params.kategoriId);
   if (params.jenisTransaksi) query.set("jenis_transaksi", params.jenisTransaksi);
+  if (params.ownerId) query.set("user_id", params.ownerId);
   if (params.page) query.set("page", String(params.page));
   if (params.limit) query.set("limit", String(params.limit));
 

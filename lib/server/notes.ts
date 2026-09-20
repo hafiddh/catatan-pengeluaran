@@ -25,6 +25,8 @@ export type ListNotesParams = {
   endDate: string;
   kategoriId: string;
   jenisTransaksi: string;
+  /** Batasi ke satu pencatat; diabaikan kalau di luar scope yang boleh dibaca. */
+  ownerId: string;
   limit: number;
   offset: number;
 };
@@ -137,11 +139,18 @@ export async function createShoppingNote(
 
 function buildNotesWhere(
   userId: string,
-  params: Pick<ListNotesParams, 'startDate' | 'endDate' | 'kategoriId' | 'jenisTransaksi'>,
+  params: Pick<
+    ListNotesParams,
+    'startDate' | 'endDate' | 'kategoriId' | 'jenisTransaksi' | 'ownerId'
+  >,
 ): { clause: string; values: unknown[] } {
   // Baca lintas anggota household; tulis tetap milik sendiri (lihat update/delete).
+  const scope = householdScope(userId);
+  // Filter pencatat hanya boleh mempersempit scope, tidak melebarkannya.
+  const readable = params.ownerId && scope.includes(params.ownerId) ? [params.ownerId] : scope;
+
   const conditions = ['t.user_id = ANY($1)', 't.deleted_at IS NULL'];
-  const values: unknown[] = [householdScope(userId)];
+  const values: unknown[] = [readable];
 
   if (params.startDate) {
     values.push(params.startDate);
