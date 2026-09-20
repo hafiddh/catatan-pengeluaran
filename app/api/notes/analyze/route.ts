@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { requireUser, UnauthorizedError } from '@/lib/server/session';
 import { callGemini } from '@/lib/server/gemini';
 import { getPersonaConfig } from '@/lib/server/analyze-personas';
+import { HOUSEHOLD_MEMBERS, type ScopeMode } from '@/lib/household';
 
 export const maxDuration = 60;
 
@@ -21,6 +22,7 @@ type AnalyzeRequest = AnalyzePeriod & {
   compare_type?: 'prev_month' | 'vs_counterpart';
   tx_type?: 'pengeluaran' | 'pemasukan';
   persona?: string;
+  scope?: ScopeMode;
 };
 
 function pct(total: number, of: number): string {
@@ -80,6 +82,14 @@ function buildPrompt(req: AnalyzeRequest, userName: string): string {
         lines.push(`\n[PERUBAHAN: MEMBURUK] ${persona.memburukTone}`);
       }
     }
+  }
+
+  if (req.scope === 'household') {
+    const names = HOUSEHOLD_MEMBERS.map((member) => member.name).join(' dan ');
+    lines.push(
+      `
+Catatan penting: semua angka di atas adalah data gabungan ${names} (satu rumah tangga), bukan milik ${userName} seorang. Bicarakan sebagai keuangan bersama.`,
+    );
   }
 
   lines.push('');

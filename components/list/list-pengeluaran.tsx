@@ -8,6 +8,8 @@ import {
 } from "@/components/ui/expense-type-pills";
 import { QtyPicker } from "@/components/ui/qty-picker";
 import showToast from "@/lib/client/simple-toast";
+import { OwnerBadge } from "@/components/ui/owner-badge";
+import { useAuth } from "@/lib/client/auth-context";
 import {
   listExpenseTypes,
   type ExpenseType,
@@ -57,6 +59,7 @@ type Props = {
 };
 
 export function ListPengeluaranView({ startDate, endDate }: Props) {
+  const { user } = useAuth();
   const [notes, setNotes] = useState<ShoppingNote[]>([]);
   const [expenseTypes, setExpenseTypes] = useState<ExpenseType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -281,19 +284,24 @@ export function ListPengeluaranView({ startDate, endDate }: Props) {
           <>
             <div className="divide-y divide-gray-100 dark:divide-slate-800 md:hidden">
               {notes.map((note) => {
-                const category = expenseTypeMap.get(note.kategori_id);
+                const categoryLabel = note.kategori_label || "Tanpa kategori";
+                const categoryIcon = note.kategori_icon;
+                const isMine = note.user_id === user?.id;
                 return (
                   <div key={note.id} className="px-4 py-3.5">
                     <div className="flex items-center justify-between gap-2">
-                      <p className="text-xs font-semibold text-gray-500 dark:text-slate-400">
-                        {formatDate(note.tanggal)}
-                      </p>
+                      <div className="flex min-w-0 items-center gap-2">
+                        <p className="text-xs font-semibold text-gray-500 dark:text-slate-400">
+                          {formatDate(note.tanggal)}
+                        </p>
+                        <OwnerBadge userId={note.user_id} />
+                      </div>
                       <div className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-cyan-50 px-2.5 py-1 text-xs font-semibold text-cyan-700 dark:bg-cyan-950/40 dark:text-cyan-200">
                         {getExpenseTypeIcon(
-                          category?.icon,
-                          category?.label || "Tanpa kategori",
+                          categoryIcon,
+                          categoryLabel,
                         )}
-                        <span>{category?.label || "Tanpa kategori"}</span>
+                        <span>{categoryLabel}</span>
                       </div>
                     </div>
 
@@ -330,29 +338,31 @@ export function ListPengeluaranView({ startDate, endDate }: Props) {
                       <p className="text-xl font-bold tracking-[0.08em] tabular-nums text-gray-900 dark:text-slate-100">
                         {formatCurrency(note.jumlah)}
                       </p>
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => openEditModal(note)}
-                          title="Edit"
-                          className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-2xl border border-white/45 bg-white/35 text-slate-700 shadow-[0_10px_24px_rgba(15,23,42,0.08)] backdrop-blur-sm transition-all duration-300 ease-out hover:-translate-y-0.5 hover:bg-white/50 dark:border-slate-700/70 dark:bg-slate-900/35 dark:text-slate-200 dark:hover:bg-slate-800/45"
-                        >
-                          <Pencil className="h-3.5 w-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(note)}
-                          disabled={deletingId === note.id}
-                          title="Hapus"
-                          className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-2xl border border-red-200/70 bg-red-50/75 text-red-700 shadow-[0_10px_24px_rgba(239,68,68,0.12)] backdrop-blur-sm transition-all duration-300 ease-out hover:-translate-y-0.5 hover:bg-red-100/80 disabled:cursor-not-allowed disabled:opacity-60 dark:border-red-900/80 dark:bg-red-950/35 dark:text-red-200 dark:hover:bg-red-900/35"
-                        >
-                          {deletingId === note.id ? (
-                            <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
-                          ) : (
-                            <Trash2 className="h-3.5 w-3.5" />
-                          )}
-                        </button>
-                      </div>
+                      {isMine && (
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => openEditModal(note)}
+                            title="Edit"
+                            className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-2xl border border-white/45 bg-white/35 text-slate-700 shadow-[0_10px_24px_rgba(15,23,42,0.08)] backdrop-blur-sm transition-all duration-300 ease-out hover:-translate-y-0.5 hover:bg-white/50 dark:border-slate-700/70 dark:bg-slate-900/35 dark:text-slate-200 dark:hover:bg-slate-800/45"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(note)}
+                            disabled={deletingId === note.id}
+                            title="Hapus"
+                            className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-2xl border border-red-200/70 bg-red-50/75 text-red-700 shadow-[0_10px_24px_rgba(239,68,68,0.12)] backdrop-blur-sm transition-all duration-300 ease-out hover:-translate-y-0.5 hover:bg-red-100/80 disabled:cursor-not-allowed disabled:opacity-60 dark:border-red-900/80 dark:bg-red-950/35 dark:text-red-200 dark:hover:bg-red-900/35"
+                          >
+                            {deletingId === note.id ? (
+                              <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <Trash2 className="h-3.5 w-3.5" />
+                            )}
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 );
@@ -365,6 +375,7 @@ export function ListPengeluaranView({ startDate, endDate }: Props) {
                   <tr className="bg-gray-50 text-left text-gray-600 dark:bg-slate-800/60 dark:text-slate-200">
                     <th className="px-5 py-4 font-semibold sm:px-6">No</th>
                     <th className="px-5 py-4 font-semibold sm:px-6">Tanggal</th>
+                    <th className="px-5 py-4 font-semibold sm:px-6">Oleh</th>
                     <th className="px-5 py-4 font-semibold sm:px-6">Kategori</th>
                     <th className="px-5 py-4 font-semibold sm:px-6">Detail</th>
                     <th className="px-5 py-4 font-semibold sm:px-6">Jumlah</th>
@@ -373,7 +384,9 @@ export function ListPengeluaranView({ startDate, endDate }: Props) {
                 </thead>
                 <tbody>
                   {notes.map((note, index) => {
-                    const category = expenseTypeMap.get(note.kategori_id);
+                    const categoryLabel = note.kategori_label || "Tanpa kategori";
+                    const categoryIcon = note.kategori_icon;
+                    const isMine = note.user_id === user?.id;
                     return (
                       <tr
                         key={note.id}
@@ -386,12 +399,15 @@ export function ListPengeluaranView({ startDate, endDate }: Props) {
                           {formatDate(note.tanggal)}
                         </td>
                         <td className="px-5 py-4 align-top sm:px-6">
+                          <OwnerBadge userId={note.user_id} />
+                        </td>
+                        <td className="px-5 py-4 align-top sm:px-6">
                           <div className="inline-flex items-center gap-2 rounded-full bg-cyan-50 px-3.5 py-1.5 text-sm font-semibold text-cyan-700 dark:bg-cyan-950/40 dark:text-cyan-200">
                             {getExpenseTypeIcon(
-                              category?.icon,
-                              category?.label || "Tanpa kategori",
+                              categoryIcon,
+                              categoryLabel,
                             )}
-                            {category?.label || "Tanpa kategori"}
+                            {categoryLabel}
                           </div>
                         </td>
                         <td className="px-5 py-4 align-top sm:px-6">
@@ -423,29 +439,31 @@ export function ListPengeluaranView({ startDate, endDate }: Props) {
                           {formatCurrency(note.jumlah)}
                         </td>
                         <td className="px-5 py-4 align-top sm:px-6">
-                          <div className="flex flex-wrap gap-2">
-                            <button
-                              type="button"
-                              onClick={() => openEditModal(note)}
-                              title="Edit"
-                              className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-2xl border border-white/45 bg-white/35 text-slate-700 shadow-[0_10px_24px_rgba(15,23,42,0.08)] backdrop-blur-sm transition-all duration-300 ease-out hover:-translate-y-0.5 hover:bg-white/50 dark:border-slate-700/70 dark:bg-slate-900/35 dark:text-slate-200 dark:hover:bg-slate-800/45"
-                            >
-                              <Pencil className="h-3.5 w-3.5" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleDelete(note)}
-                              disabled={deletingId === note.id}
-                              title="Hapus"
-                              className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-2xl border border-red-200/70 bg-red-50/75 text-red-700 shadow-[0_10px_24px_rgba(239,68,68,0.12)] backdrop-blur-sm transition-all duration-300 ease-out hover:-translate-y-0.5 hover:bg-red-100/80 disabled:cursor-not-allowed disabled:opacity-60 dark:border-red-900/80 dark:bg-red-950/35 dark:text-red-200 dark:hover:bg-red-900/35"
-                            >
-                              {deletingId === note.id ? (
-                                <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
-                              ) : (
-                                <Trash2 className="h-3.5 w-3.5" />
-                              )}
-                            </button>
-                          </div>
+                          {isMine && (
+                            <div className="flex flex-wrap gap-2">
+                              <button
+                                type="button"
+                                onClick={() => openEditModal(note)}
+                                title="Edit"
+                                className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-2xl border border-white/45 bg-white/35 text-slate-700 shadow-[0_10px_24px_rgba(15,23,42,0.08)] backdrop-blur-sm transition-all duration-300 ease-out hover:-translate-y-0.5 hover:bg-white/50 dark:border-slate-700/70 dark:bg-slate-900/35 dark:text-slate-200 dark:hover:bg-slate-800/45"
+                              >
+                                <Pencil className="h-3.5 w-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDelete(note)}
+                                disabled={deletingId === note.id}
+                                title="Hapus"
+                                className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-2xl border border-red-200/70 bg-red-50/75 text-red-700 shadow-[0_10px_24px_rgba(239,68,68,0.12)] backdrop-blur-sm transition-all duration-300 ease-out hover:-translate-y-0.5 hover:bg-red-100/80 disabled:cursor-not-allowed disabled:opacity-60 dark:border-red-900/80 dark:bg-red-950/35 dark:text-red-200 dark:hover:bg-red-900/35"
+                              >
+                                {deletingId === note.id ? (
+                                  <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
+                                ) : (
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                )}
+                              </button>
+                            </div>
+                          )}
                         </td>
                       </tr>
                     );

@@ -3,6 +3,11 @@
 import { CategoryNotesModal } from "@/components/ui/category-notes-modal";
 import { getExpenseTypeIcon } from "@/components/ui/expense-type-pills";
 import { useAuth } from "@/lib/client/auth-context";
+import {
+  HOUSEHOLD_MEMBERS,
+  isHouseholdMember,
+  type ScopeMode,
+} from "@/lib/household";
 import showToast from "@/lib/client/simple-toast";
 import {
   analyzeExpenses,
@@ -76,6 +81,25 @@ function formatYearMonth(yearMonth: string): string {
   }).format(d);
 }
 
+const HOUSEHOLD_LABEL = HOUSEHOLD_MEMBERS.map((m) => m.name).join(" & ");
+
+const SCOPE_OPTIONS: {
+  value: ScopeMode;
+  label: string;
+  description: string;
+}[] = [
+  {
+    value: "household",
+    label: "Gabungan",
+    description: `Menganalisa pemasukan ${HOUSEHOLD_LABEL} digabung jadi satu.`,
+  },
+  {
+    value: "own",
+    label: "Punya saya",
+    description: "Hanya menganalisa pemasukan yang kamu catat sendiri.",
+  },
+];
+
 const PERSONA_OPTIONS = [
   {
     value: "bestie",
@@ -130,8 +154,9 @@ export function LaporanPemasukanView({
   const [analyzeStep, setAnalyzeStep] = useState<"config" | "result">("config");
   const [analyzeMonth, setAnalyzeMonth] = useState<string>(getCurrentYearMonth);
   const [analyzeComparePrev, setAnalyzeComparePrev] = useState(false);
-  const [analyzePersona, setAnalyzePersona] =
-    useState<PersonaValue>("bestie");
+  const [analyzePersona, setAnalyzePersona] = useState<PersonaValue>("bestie");
+  const [analyzeScope, setAnalyzeScope] = useState<ScopeMode>("household");
+  const canChooseScope = isHouseholdMember(user?.id ?? "");
 
   useEffect(() => {
     if (!analysisResult) {
@@ -167,6 +192,7 @@ export function LaporanPemasukanView({
         startDate: monthStart,
         endDate: monthEnd,
         jenisTransaksi: "pemasukan",
+        scope: analyzeScope,
       });
       let prevPeriod: AnalyzePeriod | undefined;
       let compareType: string;
@@ -178,6 +204,7 @@ export function LaporanPemasukanView({
           startDate: prevStart,
           endDate: prevEnd,
           jenisTransaksi: "pemasukan",
+          scope: analyzeScope,
         });
         prevPeriod = {
           start_date: prevStart,
@@ -196,6 +223,7 @@ export function LaporanPemasukanView({
           startDate: monthStart,
           endDate: monthEnd,
           jenisTransaksi: "pengeluaran",
+          scope: analyzeScope,
         });
         prevPeriod = {
           start_date: monthStart,
@@ -225,6 +253,7 @@ export function LaporanPemasukanView({
         compare_type: compareType,
         tx_type: "pemasukan",
         persona: analyzePersona,
+        scope: analyzeScope,
       });
       setAnalysisResult(result);
     } catch (e: unknown) {
@@ -334,6 +363,39 @@ export function LaporanPemasukanView({
                       className="w-full mt-2 rounded-2xl border border-white/45 bg-white/35 px-4 py-3 text-sm text-slate-900 outline-none shadow-[0_14px_36px_rgba(15,23,42,0.08)] backdrop-blur-sm transition-all duration-300 ease-out focus:ring-2 focus:ring-slate-300/60 dark:border-slate-700/70 dark:bg-slate-900/35 dark:text-slate-100 dark:focus:ring-slate-500/50 supports-backdrop-filter:bg-white/25 dark:supports-backdrop-filter:bg-slate-900/25"
                     />
                   </label>
+
+                  {canChooseScope && (
+                    <div className="space-y-2">
+                      <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                        Data yang dianalisa
+                      </span>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {SCOPE_OPTIONS.map((option) => {
+                          const isSelected = analyzeScope === option.value;
+                          return (
+                            <button
+                              key={option.value}
+                              type="button"
+                              onClick={() => setAnalyzeScope(option.value)}
+                              className={
+                                isSelected
+                                  ? "rounded-full bg-cyan-500 px-3.5 py-1.5 text-xs font-semibold text-white shadow-[0_6px_16px_rgba(6,182,212,0.35)] transition-colors dark:bg-cyan-600"
+                                  : "rounded-full border border-slate-200 bg-white/40 px-3.5 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300 dark:hover:bg-slate-800/40"
+                              }
+                            >
+                              {option.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                        {
+                          SCOPE_OPTIONS.find((o) => o.value === analyzeScope)
+                            ?.description
+                        }
+                      </p>
+                    </div>
+                  )}
 
                   <div className="rounded-2xl border border-slate-100 bg-slate-50/60 p-4 dark:border-slate-800 dark:bg-slate-800/30">
                     <label className="flex cursor-pointer select-none items-start gap-3">

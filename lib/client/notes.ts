@@ -1,5 +1,6 @@
 // lib/client/notes.ts
 import { apiFetch, getErrorMessage } from "./api";
+import type { ScopeMode } from "../household";
 
 export type CreateShoppingNoteRequest = {
   tanggal: string;
@@ -16,6 +17,10 @@ export type ShoppingNote = {
   user_id: string;
   jenis_transaksi: string;
   kategori_id: string;
+  // Label kategori di-join di server: kategori milik partner tidak ada di
+  // daftar kategori user yang sedang login.
+  kategori_label: string;
+  kategori_icon: string;
   jumlah: number;
   nama_barang?: string;
   jumlah_barang?: number;
@@ -95,12 +100,18 @@ export async function listShoppingNotes(
 }
 
 export async function getShoppingNotesSummary(
-  params: { startDate?: string; endDate?: string; jenisTransaksi?: string } = {},
+  params: {
+    startDate?: string;
+    endDate?: string;
+    jenisTransaksi?: string;
+    scope?: ScopeMode;
+  } = {},
 ): Promise<NotesSummary> {
   const query = new URLSearchParams();
   if (params.startDate) query.set("start_date", params.startDate);
   if (params.endDate) query.set("end_date", params.endDate);
   if (params.jenisTransaksi) query.set("jenis_transaksi", params.jenisTransaksi);
+  if (params.scope) query.set("scope", params.scope);
 
   const qs = query.toString();
   const res = await apiFetch(`/notes/summary${qs ? `?${qs}` : ""}`, {
@@ -174,6 +185,7 @@ export type AnalyzeRequest = {
   compare_type?: string;
   tx_type?: string;
   persona?: string;
+  scope?: ScopeMode;
 };
 
 export async function analyzeExpenses(payload: AnalyzeRequest): Promise<string> {

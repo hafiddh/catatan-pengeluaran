@@ -17,6 +17,8 @@ export async function GET(request: Request) {
   const startDate = url.searchParams.get('start_date')?.trim() ?? '';
   const endDate = url.searchParams.get('end_date')?.trim() ?? '';
   const jenisTransaksi = url.searchParams.get('jenis_transaksi')?.trim() ?? '';
+  // Default household supaya laporan tetap gabungan; 'own' dipakai analisa AI.
+  const scope = url.searchParams.get('scope')?.trim() === 'own' ? 'own' : 'household';
 
   try {
     const summary = await summarizeShoppingNotes(
@@ -25,6 +27,7 @@ export async function GET(request: Request) {
       startDate,
       endDate,
       jenisTransaksi,
+      scope,
     );
     return NextResponse.json(summary);
   } catch {
