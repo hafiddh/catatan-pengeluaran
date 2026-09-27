@@ -2,6 +2,7 @@
 
 import showToast from "@/lib/client/simple-toast";
 import {
+  deleteExpenseType,
   listExpenseTypes,
   type ExpenseType,
 } from "@/lib/client/expense-types";
@@ -22,10 +23,12 @@ import {
   CheckCircle,
   DollarSign,
   FileText,
+  LoaderCircle,
   Mic,
   Package,
   Save,
   Tag,
+  Trash2,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -52,6 +55,11 @@ export function PengeluaranForm() {
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [isVoiceOpen, setIsVoiceOpen] = useState(false);
   const [isAddTypeOpen, setIsAddTypeOpen] = useState(false);
+  const [editingType, setEditingType] = useState<ExpenseType | null>(null);
+  const [pendingDeleteType, setPendingDeleteType] = useState<ExpenseType | null>(
+    null,
+  );
+  const [deletingTypeId, setDeletingTypeId] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -90,7 +98,56 @@ export function PengeluaranForm() {
       [...prev, newType].sort((a, b) => a.label.localeCompare(b.label)),
     );
     setExpenseType(newType.id);
+    closeTypeDialog();
+  };
+
+  const handleExpenseTypeUpdated = (updated: ExpenseType) => {
+    setExpenseTypes((prev) =>
+      prev
+        .map((it) => (it.id === updated.id ? updated : it))
+        .sort((a, b) => a.label.localeCompare(b.label)),
+    );
+    closeTypeDialog();
+    showToast("Jenis pengeluaran diubah", { type: "success" });
+  };
+
+  const openCreateTypeDialog = () => {
+    setEditingType(null);
+    setIsAddTypeOpen(true);
+  };
+
+  const openEditTypeDialog = (item: ExpenseType) => {
+    setEditingType(item);
+    setIsAddTypeOpen(true);
+  };
+
+  function closeTypeDialog() {
     setIsAddTypeOpen(false);
+    setEditingType(null);
+  }
+
+  const confirmDeleteType = async () => {
+    const target = pendingDeleteType;
+    if (!target) return;
+
+    setDeletingTypeId(target.id);
+    try {
+      await deleteExpenseType(target.id);
+      const remaining = expenseTypes.filter((it) => it.id !== target.id);
+      setExpenseTypes(remaining);
+      setExpenseType((current) =>
+        current === target.id ? (remaining[0]?.id ?? "") : current,
+      );
+      setPendingDeleteType(null);
+      showToast("Jenis pengeluaran dihapus", { type: "success" });
+    } catch (e: unknown) {
+      showToast(
+        e instanceof Error ? e.message : "Gagal menghapus jenis pengeluaran",
+        { type: "error" },
+      );
+    } finally {
+      setDeletingTypeId(null);
+    }
   };
 
   const handleSaveScannedItem = async (item: WizardSavePayload) => {
@@ -173,11 +230,16 @@ export function PengeluaranForm() {
         onSaveItem={handleSaveScannedItem}
       />
 
-      <AddExpenseTypeDialog
-        isOpen={isAddTypeOpen}
-        onClose={() => setIsAddTypeOpen(false)}
-        onCreated={handleExpenseTypeCreated}
-      />
+      {isAddTypeOpen && (
+        <AddExpenseTypeDialog
+          key={editingType?.id ?? "new"}
+          isOpen
+          onClose={closeTypeDialog}
+          onCreated={handleExpenseTypeCreated}
+          initial={editingType}
+          onUpdated={handleExpenseTypeUpdated}
+        />
+      )}
 
       <div className="grid grid-cols-1 gap-4">
         <label className="space-y-3">
@@ -261,7 +323,9 @@ export function PengeluaranForm() {
             value={expenseType}
             onChange={setExpenseType}
             disabled={isLoadingExpenseTypes}
-            onAdd={() => setIsAddTypeOpen(true)}
+            onAdd={openCreateTypeDialog}
+            onEdit={openEditTypeDialog}
+            onDelete={setPendingDeleteType}
           />
 
           {expenseTypesError ? (
@@ -292,6 +356,65 @@ export function PengeluaranForm() {
           )}
         </button>
       </div>
+
+      {pendingDeleteType ? (
+        <div className="fixed inset-0 z-80 flex items-center justify-center bg-slate-950/45 px-3 backdrop-blur-sm">
+          <div
+            className="absolute inset-0"
+            onClick={() => {
+              if (!deletingTypeId) setPendingDeleteType(null);
+            }}
+          />
+          <section className="relative z-10 w-full max-w-md rounded-3xl border border-white/45 bg-white/35 p-4 shadow-[0_24px_60px_rgba(15,23,42,0.22)] backdrop-blur-md dark:border-slate-700/70 dark:bg-slate-900/40 sm:p-5">
+            <div className="flex items-start gap-3">
+              <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-red-200 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200">
+                <Trash2 className="h-5 w-5" />
+              </div>
+              <div className="min-w-0">
+                <h3 className="text-base font-semibold text-gray-900 dark:text-slate-100">
+                  Hapus jenis pengeluaran?
+                </h3>
+                <p className="mt-1 text-sm text-gray-500 dark:text-slate-300">
+                  Jenis{" "}
+                  <span className="font-medium text-gray-900 dark:text-slate-100">
+                    {pendingDeleteType.label}
+                  </span>{" "}
+                  hilang dari pilihan. Catatan lama tetap tersimpan dan tampil
+                  sebagai &quot;Tanpa kategori&quot;.
+                </p>
+              </div>
+            </div>
+            <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={() => setPendingDeleteType(null)}
+                disabled={!!deletingTypeId}
+                className="inline-flex cursor-pointer items-center justify-center rounded-2xl border border-white/45 bg-white/35 px-4 py-2.5 text-sm font-semibold text-slate-900 shadow-[0_10px_24px_rgba(15,23,42,0.08)] backdrop-blur-sm transition-all duration-300 ease-out hover:-translate-y-0.5 hover:bg-white/50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700/70 dark:bg-slate-900/35 dark:text-slate-100 dark:hover:bg-slate-800/45"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={confirmDeleteType}
+                disabled={!!deletingTypeId}
+                className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-red-200/70 bg-red-50/75 px-4 py-2.5 text-sm font-semibold text-red-700 shadow-[0_10px_24px_rgba(239,68,68,0.12)] backdrop-blur-sm transition-all duration-300 ease-out hover:-translate-y-0.5 hover:bg-red-100/80 disabled:cursor-not-allowed disabled:opacity-60 dark:border-red-900/80 dark:bg-red-950/35 dark:text-red-200 dark:hover:bg-red-900/35"
+              >
+                {deletingTypeId ? (
+                  <>
+                    <LoaderCircle className="h-4 w-4 animate-spin" />
+                    Menghapus...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="h-4 w-4" />
+                    Ya, hapus
+                  </>
+                )}
+              </button>
+            </div>
+          </section>
+        </div>
+      ) : null}
     </>
   );
 }

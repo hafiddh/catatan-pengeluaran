@@ -40,3 +40,32 @@ export async function createExpenseType(payload: {
 
   return (await res.json()) as ExpenseType;
 }
+
+export async function updateExpenseType(
+  id: string,
+  payload: { label: string; icon: string },
+): Promise<ExpenseType> {
+  const res = await apiFetch(`/expense-types/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    throw new Error(
+      await getErrorMessage(res, "Gagal mengubah jenis pengeluaran"),
+    );
+  }
+
+  return (await res.json()) as ExpenseType;
+}
+
+export async function deleteExpenseType(id: string): Promise<void> {
+  const res = await apiFetch(`/expense-types/${id}`, { method: "DELETE" });
+
+  if (!res.ok) {
+    throw new Error(
+      await getErrorMessage(res, "Gagal menghapus jenis pengeluaran"),
+    );
+  }
+}

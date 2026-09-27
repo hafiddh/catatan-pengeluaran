@@ -1,34 +1,42 @@
 "use client";
 
 import { EXPENSE_ICONS } from "@/lib/client/expense-icons";
-import { createExpenseType, type ExpenseType } from "@/lib/client/expense-types";
+import {
+  createExpenseType,
+  updateExpenseType,
+  type ExpenseType,
+} from "@/lib/client/expense-types";
 import { X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 type Props = {
   isOpen: boolean;
   onClose: () => void;
-  onCreated: (newType: ExpenseType) => void;
+  onCreated?: (newType: ExpenseType) => void;
+  /** Diisi berarti dialog dipakai untuk mengubah jenis yang sudah ada. */
+  initial?: ExpenseType | null;
+  onUpdated?: (updated: ExpenseType) => void;
 };
 
 export function AddExpenseTypeDialog({
   isOpen,
   onClose,
   onCreated,
+  initial,
+  onUpdated,
 }: Props) {
-  const [label, setLabel] = useState("");
-  const [selectedIcon, setSelectedIcon] = useState("");
+  const [label, setLabel] = useState(initial?.label ?? "");
+  const [selectedIcon, setSelectedIcon] = useState(initial?.icon ?? "");
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
+  const isEdit = Boolean(initial);
 
+  // Nilai awal diambil dari `initial` saat mount; pemanggil me-remount dialog
+  // dengan `key` per jenis, jadi tidak perlu sinkronisasi lewat effect.
   useEffect(() => {
-    if (isOpen) {
-      setLabel("");
-      setSelectedIcon("");
-      setError("");
-      setTimeout(() => inputRef.current?.focus(), 50);
-    }
+    if (!isOpen) return;
+    setTimeout(() => inputRef.current?.focus(), 50);
   }, [isOpen]);
 
   useEffect(() => {
@@ -48,14 +56,24 @@ export function AddExpenseTypeDialog({
     setIsSaving(true);
     setError("");
     try {
-      const created = await createExpenseType({
-        label: trimmedLabel,
-        icon: selectedIcon,
-      });
-      onCreated(created);
+      const saved = initial
+        ? await updateExpenseType(initial.id, {
+            label: trimmedLabel,
+            icon: selectedIcon,
+          })
+        : await createExpenseType({ label: trimmedLabel, icon: selectedIcon });
+      if (initial) {
+        onUpdated?.(saved);
+      } else {
+        onCreated?.(saved);
+      }
     } catch (e: unknown) {
       setError(
-        e instanceof Error ? e.message : "Gagal membuat jenis pengeluaran",
+        e instanceof Error
+          ? e.message
+          : isEdit
+            ? "Gagal mengubah jenis pengeluaran"
+            : "Gagal membuat jenis pengeluaran",
       );
     } finally {
       setIsSaving(false);
@@ -73,7 +91,7 @@ export function AddExpenseTypeDialog({
       <div className="relative z-10 w-full max-w-sm rounded-2xl border border-white/45 bg-white/95 p-6 shadow-[0_24px_64px_rgba(15,23,42,0.22)] backdrop-blur-xl dark:border-slate-700/70 dark:bg-slate-900/95">
         <div className="mb-5 flex items-center justify-between">
           <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-            Tambah jenis pengeluaran
+            {isEdit ? "Ubah jenis pengeluaran" : "Tambah jenis pengeluaran"}
           </h2>
           <button
             type="button"
